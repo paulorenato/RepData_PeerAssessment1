@@ -1,9 +1,4 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 
 ## Loading and preprocessing the data
@@ -14,7 +9,8 @@ output:
 
 First we load the data from the link provided into a data-frame 'df':
 
-```{r message=F, warning=F}
+
+```r
 library(ggplot2)
 library(dplyr)
 
@@ -26,13 +22,13 @@ if(!file.exists("getdata-projectfiles-UCI HAR Dataset.zip")) {
 }
 
 df <- read.csv("activity.csv")
-
 ```
 
 ## What is mean total number of steps taken per day?
 In this section, we construct an histogram showing the distibution of total number of steps per day. NA values are removed. We also calculate the mean and median number of steps.
 
-```{r message=F, warning=F}
+
+```r
 # Remove NA before plotting. Group by date
 plot_data <- df  %>%
   group_by(date) %>%
@@ -48,18 +44,32 @@ g <- ggplot(plot_data, aes(steps)) +
       labs(x="Steps Per Day", y=expression("Count")) + 
       labs(title="Histogram of Number of Steps Per Day")
 g
-
 ```
 
+![plot of chunk unnamed-chunk-2](./PA1_template_files/figure-html/unnamed-chunk-2.png) 
+
 Now we calculate the mean and median for the total steps per day:
-```{r}
+
+```r
 mean(plot_data$steps, na.rm = TRUE)
+```
+
+```
+## [1] 9354
+```
+
+```r
 median(plot_data$steps, na.rm = TRUE)
+```
+
+```
+## [1] 10395
 ```
 
 ## What is the average daily activity pattern?
 We calculate the mean steps for each five minute interval, and then place the result in a data frame. Remove NAs
-```{r}
+
+```r
 time_data <- df  %>%
   group_by(interval) %>%
     summarise_each(funs(mean(., na.rm = TRUE)), steps)
@@ -77,21 +87,34 @@ p <- ggplot(time_data, aes(x=interval, y=steps)) +
 p
 ```
 
+![plot of chunk unnamed-chunk-4](./PA1_template_files/figure-html/unnamed-chunk-4.png) 
+
 We now find the time of day with most number of steps is:
-```{r}
+
+```r
 peak = which(time_data$steps == max(time_data$steps, na.rm = TRUE))
 format(time_data$interval[peak], "%H:%M")
 ```
 
+```
+## [1] "08:35"
+```
+
 ## Imputing missing values
 Let's determine the number of missing values (NA) in the steps column:
-```{r}
+
+```r
 sum(is.na(df$steps))
+```
+
+```
+## [1] 2304
 ```
 
 We calculate the mean steps taken for each interval in the dataset and will use those values to replace the NAs:
 
-```{r}
+
+```r
 avg_steps <- df  %>%
   group_by(interval) %>%
     summarise_each(funs(mean(., na.rm = TRUE)), steps)
@@ -104,10 +127,10 @@ for (i in 1:nrow(df)) {
     df_fill[i, "steps"] = avg_steps[indx, "steps"]
   }
 }
-
 ```
 Now we plot an histogram for the data with NAs replaced:
-```{r}
+
+```r
 plot_dataf <- df_fill  %>%
   group_by(date) %>%
     summarise_each(funs(sum), steps)
@@ -120,28 +143,56 @@ g1 <- ggplot(plot_dataf, aes(steps)) +
 g1
 ```
 
+![plot of chunk unnamed-chunk-8](./PA1_template_files/figure-html/unnamed-chunk-8.png) 
+
 Now we calculate the mean and median for the total steps per day with the imputted data:
-```{r}
+
+```r
 mean(plot_dataf$steps)
+```
+
+```
+## [1] 10766
+```
+
+```r
 median(plot_dataf$steps)
 ```
 
+```
+## [1] 10766
+```
+
 As shown above, the mean and median increased once we replaced the NAs. Here's the difference:
-```{r}
+
+```r
 mean(plot_dataf$steps) - mean(plot_data$steps)
+```
+
+```
+## [1] 1412
+```
+
+```r
 median(plot_dataf$steps) - median(plot_data$steps)
+```
+
+```
+## [1] 371.2
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
 We now create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day:
-```{r}
+
+```r
 d = weekdays(strptime(as.character(df_fill$date), format = "%Y-%m-%d"))
 d = sapply(d, function(x) {ifelse(x == "Saturday" | x == "Sunday", "Weekend", "Weekday")})
 df_fill = cbind(df_fill, day = d)
 ```
 
 So now we can plot average stpes per interval for weekdays and weekends:
-```{r}
+
+```r
 plot_data1 = df_fill %>%
   group_by(interval, day) %>%
   summarise_each(funs(mean(.,na.rm = TRUE)), steps)
@@ -157,8 +208,9 @@ g2 <- ggplot(plot_data1, aes(interval, steps, col = day)) +
   labs(title="Average Number of Steps - Weekdays vs Weekend") +
   scale_x_datetime(labels = date_format(format = "%H:%M"))
 plot(g2)
-
 ```
+
+![plot of chunk unnamed-chunk-12](./PA1_template_files/figure-html/unnamed-chunk-12.png) 
 
 These plots show that there's a difference in activity patterns between weekdays and weekends. The peak of activity is higher and earlier on weekdays. Activity during the mid-day hours is higher on weekends than on weekdays.
 
